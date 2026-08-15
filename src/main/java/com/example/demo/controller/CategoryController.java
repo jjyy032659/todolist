@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.CategoryResponse;
 import com.example.demo.dto.CreateCategoryDto;
+import com.example.demo.dto.UpdateCategoryDto;
 import com.example.demo.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -30,5 +31,18 @@ public class CategoryController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(categoryService.create(dto));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<CategoryResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateCategoryDto dto) {
+        return ResponseEntity.ok(categoryService.update(id, dto));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        categoryService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -6,7 +6,8 @@ import com.example.demo.mapper.CategoryMapper;
 import com.example.demo.model.Category;
 import com.example.demo.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
-
+import com.example.demo.dto.UpdateCategoryDto;
+import com.example.demo.exception.NotFoundException;
 import java.util.List;
 
 @Service
@@ -31,5 +32,23 @@ public class CategoryService {
         Category saved = repository.save(category);
 
         return CategoryMapper.toResponse(saved);
+    }
+
+    public CategoryResponse update(Long id, UpdateCategoryDto dto) {
+        Category category = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Category not found with id " + id));
+
+        if (dto.name() != null) {
+            category.setName(dto.name().trim());
+        }
+
+        return CategoryMapper.toResponse(repository.save(category));
+    }
+
+    public void delete(Long id) {
+        Category category = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Category not found with id " + id));
+
+        repository.delete(category);
     }
 }
