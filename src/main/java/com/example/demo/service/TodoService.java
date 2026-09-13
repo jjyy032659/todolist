@@ -26,18 +26,28 @@ public class TodoService {
     }
 
     @Transactional(readOnly = true)
-    public List<TodoResponse> findAll() {
-        return todoRepository.findAll()
-                .stream()
-                .map(TodoMapper::toResponse)
-                .toList();
+    public List<TodoResponse> findAll(List<String> categoryNames) {
+        List<Todo> todos;
+
+        if (categoryNames == null || categoryNames.isEmpty()) {
+            todos = todoRepository.findAllActive();
+        } else {
+            List<String> normalised = categoryNames.stream()
+                    .filter(name -> name != null && !name.isBlank())
+                    .map(name -> name.trim().toLowerCase())
+                    .toList();
+
+            todos = normalised.isEmpty()
+                    ? todoRepository.findAllActive()
+                    : todoRepository.findAllActiveByCategoryNames(normalised);
+        }
+
+        return todos.stream().map(TodoMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public TodoResponse findById(Long id) {
-        Todo todo = todoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Todo not found with id " + id));
-
+        Todo todo = findActiveOrThrow(id);
         return TodoMapper.toResponse(todo);
     }
 
@@ -55,8 +65,7 @@ public class TodoService {
 
     @Transactional
     public TodoResponse update(Long id, UpdateTodoDto dto) {
-        Todo todo = todoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Todo not found with id " + id));
+        Todo todo = findActiveOrThrow(id);
 
         if (dto.title() != null && !dto.title().isBlank()) {
             todo.setTitle(dto.title().trim());
@@ -72,11 +81,16 @@ public class TodoService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        Todo todo = todoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Todo not found with id " + id));
+    public void archive(Long id) {
+        Todo todo = findActiveOrThrow(id);
 
-        todoRepository.delete(todo);
+        todo.setArchived(true);
+        todoRepository.save(todo);
+    }
+
+    private Todo findActiveOrThrow(Long id) {
+        return todoRepository.findActiveById(id)
+                .orElseThrow(() -> new NotFoundException("Todo not found with id " + id));
     }
 
     private Category findCategoryOrThrow(Long categoryId) {

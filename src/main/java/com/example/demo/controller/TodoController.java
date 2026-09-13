@@ -21,11 +21,6 @@ public class TodoController {
         this.todoService = todoService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<TodoResponse>> getAll() {
-        return ResponseEntity.ok(todoService.findAll());
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<TodoResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(todoService.findById(id));
@@ -45,7 +40,13 @@ public class TodoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        todoService.delete(id);
+        todoService.archive(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TodoResponse>> getAll(
+            @RequestParam(name = "category", required = false) List<String> categories) {
+        return ResponseEntity.ok(todoService.findAll(categories));
     }
 }
